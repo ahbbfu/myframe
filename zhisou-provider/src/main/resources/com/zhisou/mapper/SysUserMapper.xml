@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhisou.mapper.SysUserMapper">
+
+	<!-- 通用查询结果列-->
+	<sql id="base_column_list">
+		id, login_name, real_name, nickname, password, email, phone, last_login_time, is_disabled, deleted, create_time
+	</sql>
+
+	<!--通用查询条件-->
+	<sql id="where_sql">
+		<if test="login_name != null">
+			AND login_name =#{login_name}
+		</if>
+		<if test="real_name != null">
+			AND real_name =#{real_name}
+		</if>
+		<if test="nickname != null">
+			AND nickname =#{nickname}
+		</if>
+		<if test="password != null">
+			AND password =#{password}
+		</if>
+		<if test="email != null">
+			AND email =#{email}
+		</if>
+		<if test="phone != null">
+			AND phone =#{phone}
+		</if>
+		<if test="last_login_time != null">
+			AND last_login_time =#{last_login_time}
+		</if>
+		<if test="is_disabled != null">
+			AND is_disabled =#{is_disabled}
+		</if>
+		<if test="deleted != null">
+			AND deleted =#{deleted}
+		</if>
+		<if test="create_time != null">
+			AND create_time =#{create_time}
+		</if>
+	</sql>
+
+	<!--查询（根据主键ID查询） -->
+	<select id="selectByPrimaryKey" resultType="SysUser" parameterType="java.lang.Long">
+		SELECT
+		<include refid="base_column_list" />
+		FROM sys_user
+		WHERE id = #{id}
+	</select>
+
+	<!--查询（根据条件查询总数） -->
+	<select id="selectListCount" parameterType="java.util.Map" resultType="int" >
+		SELECT count(1)
+		FROM sys_user
+		<trim
+			prefix="WHERE"
+			prefixOverrides="AND |OR" >
+		<include refid="where_sql"/>
+		</trim>
+	</select>
+
+	<!--查询（根据条件查询列表） -->
+	<select id="selectList" parameterType="java.util.Map" resultType="SysUser" >
+		SELECT
+		<include refid="base_column_list"/>
+		FROM sys_user
+		<trim
+			prefix="WHERE"
+			prefixOverrides="AND |OR" >
+			<include refid="where_sql"/>
+		</trim>
+		<if test="start != null and limit != null">
+		limit #{start},#{limit}
+		</if>
+	</select>
+
+	<!-- 删除：根据主键ID删除 -->
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		DELETE FROM sys_user
+		WHERE id = #{id}
+	</delete>
+
+	<!-- 添加 -->
+	<insert id="insert" parameterType="SysUser">
+		INSERT INTO sys_user
+ 		(login_name,real_name,nickname,password,email,phone,last_login_time,is_disabled,deleted,create_time) 
+		VALUES 
+ 		(#{loginName},#{realName},#{nickname},#{password},#{email},#{phone},#{lastLoginTime},#{isDisabled},#{deleted},#{createTime}) 
+		<selectKey keyProperty="id" resultType="Long">
+			SELECT LAST_INSERT_ID() AS ID
+		</selectKey>
+	</insert>
+
+	<!-- 添加 （匹配有值的字段） -->
+	<insert id="insertSelective" useGeneratedKeys="true" parameterType="SysUser">
+		INSERT INTO sys_user
+		<trim prefix="(" suffix=")" suffixOverrides="," >
+			<if test="id != null">
+				 id,
+			</if>
+			<if test="loginName != null">
+				 login_name,
+			</if>
+			<if test="realName != null">
+				 real_name,
+			</if>
+			<if test="nickname != null">
+				 nickname,
+			</if>
+			<if test="password != null">
+				 password,
+			</if>
+			<if test="email != null">
+				 email,
+			</if>
+			<if test="phone != null">
+				 phone,
+			</if>
+			<if test="lastLoginTime != null">
+				 last_login_time,
+			</if>
+			<if test="isDisabled != null">
+				 is_disabled,
+			</if>
+			<if test="deleted != null">
+				 deleted,
+			</if>
+			<if test="createTime != null">
+				 create_time,
+			</if>
+
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides="," >
+			<if test="id!=null">
+				 #{id},
+			</if>
+			<if test="loginName!=null">
+				 #{loginName},
+			</if>
+			<if test="realName!=null">
+				 #{realName},
+			</if>
+			<if test="nickname!=null">
+				 #{nickname},
+			</if>
+			<if test="password!=null">
+				 #{password},
+			</if>
+			<if test="email!=null">
+				 #{email},
+			</if>
+			<if test="phone!=null">
+				 #{phone},
+			</if>
+			<if test="lastLoginTime!=null">
+				 #{lastLoginTime},
+			</if>
+			<if test="isDisabled!=null">
+				 #{isDisabled},
+			</if>
+			<if test="deleted!=null">
+				 #{deleted},
+			</if>
+			<if test="createTime!=null">
+				 #{createTime},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 修 改 -->
+	<update id="updateByPrimaryKeySelective" parameterType="SysUser">
+		UPDATE sys_user
+ 		<set> 
+			<if test="loginName != null">
+				 login_name = #{loginName},
+			</if>
+			<if test="realName != null">
+				 real_name = #{realName},
+			</if>
+			<if test="nickname != null">
+				 nickname = #{nickname},
+			</if>
+			<if test="password != null">
+				 password = #{password},
+			</if>
+			<if test="email != null">
+				 email = #{email},
+			</if>
+			<if test="phone != null">
+				 phone = #{phone},
+			</if>
+			<if test="lastLoginTime != null">
+				 last_login_time = #{lastLoginTime},
+			</if>
+			<if test="isDisabled != null">
+				 is_disabled = #{isDisabled},
+			</if>
+			<if test="deleted != null">
+				 deleted = #{deleted},
+			</if>
+			<if test="createTime != null">
+				 create_time = #{createTime},
+			</if>
+
+ 		</set>
+		WHERE id = #{id}
+	</update>
+
+	<!-- 修 改 -->
+	<update id="updateByPrimaryKey" parameterType="SysUser">
+		UPDATE sys_user
+		SET 
+			 login_name = #{loginName},
+			 real_name = #{realName},
+			 nickname = #{nickname},
+			 password = #{password},
+			 email = #{email},
+			 phone = #{phone},
+			 last_login_time = #{lastLoginTime},
+			 is_disabled = #{isDisabled},
+			 deleted = #{deleted},
+			 create_time = #{createTime}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

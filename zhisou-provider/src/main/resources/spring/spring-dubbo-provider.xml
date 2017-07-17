@@ -16,8 +16,8 @@
 	<dubbo:protocol name="dubbo" port="20881" />
 
 	<!-- 声明需要暴露的服务接口（interface是全路径名，不能自定义） -->
-	<dubbo:service interface="com.zhisou.api.service.UserService" ref="userService" />
+	<dubbo:service interface="com.zhisou.api.service.SysUserService" ref="userService" />
 
 	<!-- 和本地bean一样实现服务 -->
-	<bean id="userService" class="com.zhisou.provider.UserServiceImpl"/>
+	<bean id="userService" class="com.zhisou.provider.SysUserServiceImpl"/>
 </beans>

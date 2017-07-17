@@ -13,7 +13,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,14 +75,20 @@ public class MybatisMapperUtil {
     private String password = "";
  
     private String url = "";
+    
+    private String db_name = null;
+    
+    private String create_user = null;
  
     private String tableName = null;
  
     private String beanName = null;
  
     private String mapperName = null;
- 
+    
     private Connection conn = null;
+    
+    private String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
  
  
     private void init() throws ClassNotFoundException, SQLException {
@@ -95,12 +103,15 @@ public class MybatisMapperUtil {
     		url = prop.getProperty("jdbc.url");
     		user = prop.getProperty("jdbc.username");
     		password = prop.getProperty("jdbc.password");
+    		db_name = prop.getProperty("db.name");
     		table_name = prop.getProperty("table.name");
     		model_package = prop.getProperty("model.package");
     		mapper_package = prop.getProperty("mapper.package");
     		model_path = prop.getProperty("model.path");
     		mapper_path = prop.getProperty("mapper.path");
+    		create_user = prop.getProperty("create.user");
     		model_xml_path = mapper_path+File.separator+"xml";
+    		
     		
     		///加载属性列表
 //    		Iterator<String> it=prop.stringPropertyNames().iterator();
@@ -137,9 +148,9 @@ public class MybatisMapperUtil {
         	
         }else if("com.mysql.jdbc.Driver".equals(driverName)){
         	if(table_name.indexOf("%") != -1){
-        		showTableSql = "show tables where Tables_in_test like '"+table_name+"'";
+        		showTableSql = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = '"+db_name+"' AND table_name like '"+table_name+"'";
         	}else{
-        		showTableSql = "show tables where Tables_in_test where table_name ='"+table_name+"'";
+        		showTableSql = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = '"+db_name+"' AND table_name ='"+table_name+"'";
         	}
         }
         PreparedStatement pstate = conn.prepareStatement(showTableSql);
@@ -160,7 +171,11 @@ public class MybatisMapperUtil {
         if(tableNew.indexOf("_")!=-1){
         	String[] tables = tableNew.split("_");
             String temp = null;
-            for ( int i = 1 ; i < tables.length ; i++ ) {
+            int i=1;
+            if(tableNew.startsWith("sys") || tableNew.startsWith("SYS")){
+            	i=0;
+            }
+            for (;i < tables.length ; i++ ) {
                 temp = tables[i].trim();
                 if(!"".equals(temp)){
                 	sb.append(temp.substring(0, 1).toUpperCase()).append(temp.substring(1));
@@ -232,7 +247,7 @@ public class MybatisMapperUtil {
      * @return
      * @throws IOException 
      */
-    private BufferedWriter buildClassComment( BufferedWriter bw, String text ) throws IOException {
+    private BufferedWriter buildClassComment(BufferedWriter bw, String text) throws IOException {
         bw.newLine();
         bw.newLine();
         bw.write("/**");
@@ -243,7 +258,15 @@ public class MybatisMapperUtil {
         bw.newLine();
         bw.write(" * ");
         bw.newLine();
+        bw.write(" * @author " + create_user);
+        bw.newLine();
+        bw.write(" * @since " + today);
+        bw.newLine();
+        bw.write(" * ");
+        bw.newLine();
         bw.write(" **/");
+        
+        
         return bw;
     }
  
@@ -366,38 +389,39 @@ public class MybatisMapperUtil {
         bw.newLine();
         bw.write("import " + model_package + "." + beanName + ";");
         bw.newLine();
-        bw.write("import org.apache.ibatis.annotations.Param;");
-        bw = buildClassComment(bw, mapperName + "数据库操作接口类");
+        bw.write("import java.util.Map;");
         bw.newLine();
+        bw.write("import java.util.ArrayList;");
+        
+        bw = buildClassComment(bw, mapperName + "数据库操作接口类");
         bw.newLine();
         //      bw.write("public interface " + mapperName + " extends " + mapper_extends + "<" + beanName + "> {");
         bw.write("public interface " + mapperName + "{");
         bw.newLine();
-        bw.newLine();
         // ----------定义Mapper中的方法Begin----------
         bw = buildMethodComment(bw, "查询（根据主键ID查询）");
         bw.newLine();
-        bw.write("\t" + beanName + "  selectByPrimaryKey ( @Param(\"id\") Long id );");
+        bw.write("\t" + beanName + " selectByPrimaryKey(Long id);");
         bw.newLine();
-        bw = buildMethodComment(bw, "删除（根据主键ID删除）");
+        bw = buildMethodComment(bw, "查询（根据条件查询）");
         bw.newLine();
-        bw.write("\t" + "int deleteByPrimaryKey ( @Param(\"id\") Long id );");
+        bw.write("\t" + "int selectListCount(Map<String,Object> map);");
+        bw.newLine();
+        bw = buildMethodComment(bw, "查询（根据条件查询）");
+        bw.newLine();
+        bw.write("\tArrayList<" + beanName + "> selectList(Map<String,Object> map);");
         bw.newLine();
         bw = buildMethodComment(bw, "添加");
         bw.newLine();
-        bw.write("\t" + "int insert( " + beanName + " record );");
+        bw.write("\t" + "int insert(" + beanName + " entity);");
         bw.newLine();
-        bw = buildMethodComment(bw, "添加 （匹配有值的字段）");
+        bw = buildMethodComment(bw, "修改");
         bw.newLine();
-        bw.write("\t" + "int insertSelective( " + beanName + " record );");
+        bw.write("\t" + "int update(" + beanName + " entity);");
         bw.newLine();
-        bw = buildMethodComment(bw, "修改 （匹配有值的字段）");
+        bw = buildMethodComment(bw, "删除（根据主键ID删除）");
         bw.newLine();
-        bw.write("\t" + "int updateByPrimaryKeySelective( " + beanName + " record );");
-        bw.newLine();
-        bw = buildMethodComment(bw, "修改（根据主键ID修改）");
-        bw.newLine();
-        bw.write("\t" + "int updateByPrimaryKey ( " + beanName + " record );");
+        bw.write("\t" + "int deleteByPrimaryKey(Long id);");
         bw.newLine();
  
         // ----------定义Mapper中的方法End----------
@@ -471,12 +495,12 @@ public class MybatisMapperUtil {
         // 通用结果列
         bw.write("\t<!-- 通用查询结果列-->");
         bw.newLine();
-        bw.write("\t<sql id=\"Base_Column_List\">");
+        bw.write("\t<sql id=\"base_column_list\">");
         bw.newLine();
  
-        bw.write("\t\t id,");
+        bw.write("\t\tid,");
         for ( int i = 1 ; i < size ; i++ ) {
-            bw.write("\t" + columns.get(i));
+            bw.write(" " + columns.get(i));
             if ( i != size - 1 ) {
                 bw.write(",");
             }
@@ -487,83 +511,108 @@ public class MybatisMapperUtil {
         bw.newLine();
         bw.newLine();
  
+        // 通用查询条件
+        bw.write("\t<!--通用查询条件-->");
+        bw.newLine();
+        bw.write("\t<sql id=\"where_sql\">");
+        bw.newLine();
+        for ( int i = 1 ; i < size ; i++ ) {
+        	bw.write("\t\t<if test=\""+columns.get(i)+" != null\">");
+        	bw.newLine();
+            bw.write("\t\t\tAND "+columns.get(i)+" =#{"+columns.get(i)+"}");
+            bw.newLine();
+            bw.write("\t\t</if>");
+            bw.newLine();
+        }
+        
+        bw.write("\t</sql>");
+        bw.newLine();
+        bw.newLine();
+    		
  
         // 查询（根据主键ID查询）
-        bw.write("\t<!-- 查询（根据主键ID查询） -->");
+        bw.write("\t<!--查询（根据主键ID查询） -->");
         bw.newLine();
         bw.write("\t<select id=\"selectByPrimaryKey\" resultType=\""
                 + processResultMapId(beanName) + "\" parameterType=\"java.lang." + processType(types.get(0)) + "\">");
         bw.newLine();
-        bw.write("\t\t SELECT");
+        bw.write("\t\tSELECT");
         bw.newLine();
-        bw.write("\t\t <include refid=\"Base_Column_List\" />");
+        bw.write("\t\t<include refid=\"base_column_list\" />");
         bw.newLine();
-        bw.write("\t\t FROM " + tableName);
+        bw.write("\t\tFROM " + tableName);
         bw.newLine();
-        bw.write("\t\t WHERE " + columns.get(0) + " = #{" + processField(columns.get(0)) + "}");
+        bw.write("\t\tWHERE " + columns.get(0) + " = #{" + processField(columns.get(0)) + "}");
         bw.newLine();
         bw.write("\t</select>");
         bw.newLine();
         bw.newLine();
-        // 查询完
+        // 查询完成
  
- 
-        // 删除（根据主键ID删除）
-        bw.write("\t<!--删除：根据主键ID删除-->");
+        // 查询（根据条件查询总数 ）
+        bw.write("\t<!--查询（根据条件查询总数） -->");
         bw.newLine();
-        bw.write("\t<delete id=\"deleteByPrimaryKey\" parameterType=\"java.lang." + processType(types.get(0)) + "\">");
+        bw.write("\t<select id=\"selectListCount\" parameterType=\"java.util.Map\" resultType=\"int\" >");
         bw.newLine();
-        bw.write("\t\t DELETE FROM " + tableName);
+        bw.write("\t\tSELECT count(1)");
         bw.newLine();
-        bw.write("\t\t WHERE " + columns.get(0) + " = #{" + processField(columns.get(0)) + "}");
+        bw.write("\t\tFROM " + tableName);
         bw.newLine();
-        bw.write("\t</delete>");
+        bw.write("\t\t<trim");
+        bw.newLine();
+        bw.write("\t\t\tprefix=\"WHERE\"");
+        bw.newLine();
+        bw.write("\t\t\tprefixOverrides=\"AND |OR\" >");
+        bw.newLine();
+        bw.write("\t\t<include refid=\"where_sql\"/>");
+        bw.newLine();
+        bw.write("\t\t</trim>");
+        bw.newLine();
+        bw.write("\t</select>");
         bw.newLine();
         bw.newLine();
-        // 删除完
- 
- 
-        // 添加insert方法
-        bw.write("\t<!-- 添加 -->");
+        // 查询（根据条件查询总数 ）完成
+        
+        // 查询（根据条件查询列表 ）
+        bw.write("\t<!--查询（根据条件查询列表） -->");
+        bw.newLine();
+        bw.write("\t<select id=\"selectList\" parameterType=\"java.util.Map\" resultType=\""+processResultMapId(beanName)+"\" >");
+        bw.newLine();
+        bw.write("\t\tSELECT");
+        bw.newLine();
+        bw.write("\t\t<include refid=\"base_column_list\"/>");
+        bw.newLine();
+        bw.write("\t\tFROM sys_user");
+        bw.newLine();
+        bw.write("\t\t<trim");
+        bw.newLine();
+        bw.write("\t\t\tprefix=\"WHERE\"");
+        bw.newLine();
+        bw.write("\t\t\tprefixOverrides=\"AND |OR\" >");
+        bw.newLine();
+        bw.write("\t\t\t<include refid=\"where_sql\"/>");
+        bw.newLine();
+        bw.write("\t\t</trim>");
+        bw.newLine();
+        bw.write("\t\t<if test=\"start != null and limit != null\">");
+        bw.newLine();
+        bw.write("\t\tlimit #{start},#{limit}");
+        bw.newLine();
+        bw.write("\t\t</if>");
+        bw.newLine();
+        bw.write("\t</select>");
+        bw.newLine();
+        bw.newLine();
+        // 查询（根据条件查询列表 ）完成
+        
+        //---------------  insert方法（匹配有值的字段）
+        bw.write("\t<!-- 添加  -->");
         bw.newLine();
         bw.write("\t<insert id=\"insert\" parameterType=\"" + processResultMapId(beanName) + "\">");
         bw.newLine();
-        bw.write("\t\t INSERT INTO " + tableName);
+        bw.write("\t\tINSERT INTO " + tableName);
         bw.newLine();
-        bw.write(" \t\t(");
-        for ( int i = 0 ; i < size ; i++ ) {
-            bw.write(columns.get(i));
-            if ( i != size - 1 ) {
-                bw.write(",");
-            }
-        }
-        bw.write(") ");
-        bw.newLine();
-        bw.write("\t\t VALUES ");
-        bw.newLine();
-        bw.write(" \t\t(");
-        for ( int i = 0 ; i < size ; i++ ) {
-            bw.write("#{" + processField(columns.get(i)) + "}");
-            if ( i != size - 1 ) {
-                bw.write(",");
-            }
-        }
-        bw.write(") ");
-        bw.newLine();
-        bw.write("\t</insert>");
-        bw.newLine();
-        bw.newLine();
-        // 添加insert完
- 
- 
-        //---------------  insert方法（匹配有值的字段）
-        bw.write("\t<!-- 添加 （匹配有值的字段）-->");
-        bw.newLine();
-        bw.write("\t<insert id=\"insertSelective\" parameterType=\"" + processResultMapId(beanName) + "\">");
-        bw.newLine();
-        bw.write("\t\t INSERT INTO " + tableName);
-        bw.newLine();
-        bw.write("\t\t <trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\" >");
+        bw.write("\t\t<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\" >");
         bw.newLine();
  
         String tempField = null;
@@ -578,10 +627,10 @@ public class MybatisMapperUtil {
         }
  
         bw.newLine();
-        bw.write("\t\t </trim>");
+        bw.write("\t\t</trim>");
         bw.newLine();
  
-        bw.write("\t\t <trim prefix=\"values (\" suffix=\")\" suffixOverrides=\",\" >");
+        bw.write("\t\t<trim prefix=\"values (\" suffix=\")\" suffixOverrides=\",\" >");
         bw.newLine();
  
         tempField = null;
@@ -595,7 +644,7 @@ public class MybatisMapperUtil {
             bw.newLine();
         }
  
-        bw.write("\t\t </trim>");
+        bw.write("\t\t</trim>");
         bw.newLine();
         bw.write("\t</insert>");
         bw.newLine();
@@ -604,13 +653,13 @@ public class MybatisMapperUtil {
  
  
         // 修改update方法
-        bw.write("\t<!-- 修 改-->");
+        bw.write("\t<!-- 修 改 -->");
         bw.newLine();
-        bw.write("\t<update id=\"updateByPrimaryKeySelective\" parameterType=\"" + processResultMapId(beanName) + "\">");
+        bw.write("\t<update id=\"update\" parameterType=\"" + processResultMapId(beanName) + "\">");
         bw.newLine();
-        bw.write("\t\t UPDATE " + tableName);
+        bw.write("\t\tUPDATE " + tableName);
         bw.newLine();
-        bw.write(" \t\t <set> ");
+        bw.write(" \t\t<set> ");
         bw.newLine();
  
         tempField = null;
@@ -625,40 +674,28 @@ public class MybatisMapperUtil {
         }
  
         bw.newLine();
-        bw.write(" \t\t </set>");
+        bw.write(" \t\t</set>");
         bw.newLine();
-        bw.write("\t\t WHERE " + columns.get(0) + " = #{" + processField(columns.get(0)) + "}");
+        bw.write("\t\tWHERE " + columns.get(0) + " = #{" + processField(columns.get(0)) + "}");
         bw.newLine();
         bw.write("\t</update>");
         bw.newLine();
         bw.newLine();
         // update方法完毕
- 
-        // ----- 修改（匹配有值的字段）
-        bw.write("\t<!-- 修 改-->");
+        
+        // 删除（根据主键ID删除）
+        bw.write("\t<!-- 删除：根据主键ID删除 -->");
         bw.newLine();
-        bw.write("\t<update id=\"updateByPrimaryKey\" parameterType=\"" + processResultMapId(beanName) + "\">");
+        bw.write("\t<delete id=\"deleteByPrimaryKey\" parameterType=\"java.lang." + processType(types.get(0)) + "\">");
         bw.newLine();
-        bw.write("\t\t UPDATE " + tableName);
+        bw.write("\t\tDELETE FROM " + tableName);
         bw.newLine();
-        bw.write("\t\t SET ");
- 
+        bw.write("\t\tWHERE " + columns.get(0) + " = #{" + processField(columns.get(0)) + "}");
         bw.newLine();
-        tempField = null;
-        for ( int i = 1 ; i < size ; i++ ) {
-            tempField = processField(columns.get(i));
-            bw.write("\t\t\t " + columns.get(i) + " = #{" + tempField + "}");
-            if ( i != size - 1 ) {
-                bw.write(",");
-            }
-            bw.newLine();
-        }
- 
-        bw.write("\t\t WHERE " + columns.get(0) + " = #{" + processField(columns.get(0)) + "}");
-        bw.newLine();
-        bw.write("\t</update>");
+        bw.write("\t</delete>");
         bw.newLine();
         bw.newLine();
+        // 删除完
     }
  
  
