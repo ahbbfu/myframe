@@ -35,8 +35,8 @@
 	      <#list users as user>
 	      <tr>
 	        <td width="160" height="65" align="center"><span class="STYLE15">${user.id}</span></td>
-	        <td width="160" height="65" align="center"><span class="STYLE15">${user.userName}</span></td>
-	        <td width="160" height="65" align="center"><span class="STYLE15">${user.passWord}</span></td>
+	        <td width="160" height="65" align="center"><span class="STYLE15">${user.createTime?string('dd.MM.yyyy HH:mm:ss')}</span></td>
+	        <td width="160" height="65" align="center"><span class="STYLE15">${user.password}</span></td>
 	      </tr>
 	      </#list>
 	    </table>
@@ -49,5 +49,6 @@
     <td width="500" height="200">&nbsp;</td>
   </tr>
 </table>
+<@shiro.hasRole name="admin1">Hello admin!</@shiro.hasRole>
 </body>
 </html>
